@@ -42,8 +42,6 @@ library(stringi)
 
 ##-----  3. Define Permutation and Search Function  -----
 
-
-
 spelling_bee <- function(n, spb_letters, spb_centre) {
 
   system.time({  
@@ -70,54 +68,72 @@ spelling_bee <- function(n, spb_letters, spb_centre) {
     #~ Onomaetopoes (bzzz, aaargh, etc.) But these are unlikely to be actual words
     #~ Validate this theory by searching the words database for three consecutive letters
   
-  perms <- perms[str_detect(perms, pattern = str_c(spb_centre, "{3,}"), negate = TRUE)] 
-  perms <- perms[str_detect(perms, pattern = str_c(spb_letters[1], "{3,}"), negate = TRUE)]
-  perms <- perms[str_detect(perms, pattern = str_c(spb_letters[2], "{3,}"), negate = TRUE)]
-  perms <- perms[str_detect(perms, pattern = str_c(spb_letters[3], "{3,}"), negate = TRUE)]
-  perms <- perms[str_detect(perms, pattern = str_c(spb_letters[4], "{3,}"), negate = TRUE)]
-  perms <- perms[str_detect(perms, pattern = str_c(spb_letters[5], "{3,}"), negate = TRUE)]
-  perms <- perms[str_detect(perms, pattern = str_c(spb_letters[6], "{3,}"), negate = TRUE)]
+  # perms <- perms[str_detect(perms, pattern = str_c(spb_centre, "{3,}"), negate = TRUE)] 
+  # perms <- perms[str_detect(perms, pattern = str_c(spb_letters[1], "{3,}"), negate = TRUE)]
+  # perms <- perms[str_detect(perms, pattern = str_c(spb_letters[2], "{3,}"), negate = TRUE)]
+  # perms <- perms[str_detect(perms, pattern = str_c(spb_letters[3], "{3,}"), negate = TRUE)]
+  # perms <- perms[str_detect(perms, pattern = str_c(spb_letters[4], "{3,}"), negate = TRUE)]
+  # perms <- perms[str_detect(perms, pattern = str_c(spb_letters[5], "{3,}"), negate = TRUE)]
+  # perms <- perms[str_detect(perms, pattern = str_c(spb_letters[6], "{3,}"), negate = TRUE)]
   
-  #~ This is good, but still too many permutations of junk combos
+  ## Concatenate the entire list words of the relevent length and search for combos which definitely never occur
+    # This creates a much more condensed list to match against
+    #~ This line of code should actually cover the ones above searching for three letter combos!
+  perms <-  perms[stri_detect_fixed(str_flatten(filter(words, word_length == n)$word), perms)]
   
   
   
   
-  system.time({   
-  ## Check all permutations against the valid words list
-  acceptable_words <- list()
+  word_list <- filter(words, word_length == n)$word
+  
+  allowable_words <- list()
   
   for (i in seq_along(perms)) {
     
-    
-    ## Filter Scrabble words by desired length to trim the search time
-    word_list <- filter(words, word_length == n)$word
-    
-    ## Determine if they're in the Scrabble words, if so extract them
-
-    #~ This should speed things up a bit, hopefully?
-    acceptable_words[[i]] <- stri_detect_fixed(perms[i], word_list, max_count = 1)
-    
-    
-    #if(any(str_detect(perms[i], scrabble_words))) {
-    # if(any(stri_detect_fixed(perms[i], scrabble_words, max_count = 1))) {
-    #   
-    #   acceptable_words[[i]] <- perms[i]
-    #   
-    # }
+    allowable_words[[i]] <- word_list[stri_detect_fixed(word_list, perms[i])]
     
   }
   
-  })
+  
+  
+  
+  
+ 
+  ## Check all permutations against the valid words list
+  # acceptable_words <- list()
+  # 
+  # for (i in seq_along(perms)) {
+  #   
+  #   
+  #   ## Filter Scrabble words by desired length to trim the search time
+  #   word_list <- filter(words, word_length == n)$word
+  #   
+  #   ## Determine if they're in the Scrabble words, if so extract them
+  # 
+  #   #~ This should speed things up a bit, hopefully?
+  #   acceptable_words[[i]] <- stri_detect_fixed(perms[i], word_list, max_count = 1)
+  #   
+  #   
+  #   #if(any(str_detect(perms[i], scrabble_words))) {
+  #   # if(any(stri_detect_fixed(perms[i], scrabble_words, max_count = 1))) {
+  #   #   
+  #   #   acceptable_words[[i]] <- perms[i]
+  #   #   
+  #   # }
+  #   
+  # }
+  
   
   ## Drop the empty elements of the list
-  acceptable_words <- acceptable_words[-which(sapply(acceptable_words, is.null))]
+  #allowable_words <- allowable_words[-which(sapply(allowable_words, is.null))]
+  allowable_words <- allowable_words[which(sapply(allowable_words, length) != 0)]
+  
   
   ## Convert to data frame
-  acceptable_words  <- as.data.frame(do.call(rbind, acceptable_words))
+  allowable_words  <- as.data.frame(do.call(rbind, allowable_words))
   
   
-  return(acceptable_words)
+  return(allowable_words)
   
 }
 
@@ -130,7 +146,7 @@ data("words")
 
 
 ## Drop any words < 4 letters long
-words <- filter(words, word_length == n)
+words <- filter(words, word_length > 4)
 
 
 
@@ -156,6 +172,12 @@ answers <- map(c(4:12), function(n) {spelling_bee(n, spb_090322, spb_090322_cent
 
 
 
+
+
+
+
+
+
 ## Ideas to speed up
   # Remove 'words' which have 3 or more of the same letter repeated consecutively
   # Remove 'words which have a high degree of repeat of the same letter (regardless of consecutive-ness)
@@ -163,6 +185,21 @@ answers <- map(c(4:12), function(n) {spelling_bee(n, spb_090322, spb_090322_cent
 # Test where the bottlenecks are - in the permutation generation phase, or the matching phase?
   #~ The bottleneck is in the matching words against the scrabble list
   #~ But the permutation calculation also blows out badly with longer words
+
+
+#~ Trick is going to be to cut down the number of permutations to match
+
+
+# As suggested on SO - concat the entire allowable words list, and match weird combinations against that?
+  # Then these could be excluded
+
+system.time({
+  perms_test <-  perms[stri_detect_fixed(str_flatten(filter(words, word_length == 6)$word), perms)]
+})
+
+
+
+
 
 # Introduce DT?
   # https://stackoverflow.com/questions/63120555/how-to-optimize-string-detection-for-speed
@@ -191,12 +228,29 @@ answers <- map(c(4:12), function(n) {spelling_bee(n, spb_090322, spb_090322_cent
   # Matching = 53 seconds
 
 
+
+
+system.time({
+  answers <- spelling_bee(7, spb_090322, spb_090322_centre)
+})
+
 ## n = 6
   # Permutation = .21 seconds
   # No. of perms = 117,649
   # Matching = takes way too long (several minutes at least)
   # After dropping 3 letter combos = 109,116 long. Still too long
-  # Whole function took 6.5 minutes to resolve the answers - clearly the problem is increasing exponentially
+  # Whole function with stringi took 6.5 minutes to resolve the answers - clearly the problem is increasing exponentially
+  # Simpler function without if loop cut down to just under 5 minutes
+  # Reduced permutations (no gobbledegook combos) - under 14 seconds. 
+
+
+## n = 7
+  # Takes 3.4 minutes
+
+
+## n = 8
+  # 7^8 = 5.7 million permutations, which is rather hefty
+  # Computation time is looooooong
 
 
 ## n = 12
@@ -208,8 +262,5 @@ answers <- map(c(4:12), function(n) {spelling_bee(n, spb_090322, spb_090322_cent
 
 
 
-system.time({
-  answers <- spelling_bee(6, spb_090322, spb_090322_centre)
-})
 
 
