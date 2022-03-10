@@ -316,4 +316,41 @@ arrangs <- arrangs[stri_detect_fixed(str_flatten(filter(words, word_length == 7)
 
 
 
+##-----  6. Nic's approach  -----
+
+# Muuuuch simpler and faster approach.
+
+spb_letters <- spb_100322
+spb_centre <- spb_100322_centre
+
+
+spelling_bee_nic <- function(spb_letters, spb_centre) {
+  
+  not_the_letters <- setdiff(letters, spb_letters)
+  
+  allowed_words <- filter(words, str_detect(words$word, spb_centre)) # Filter words with the centre letter
+  
+  
+  for (i in seq_along(not_the_letters)) {
+    
+    allowed_words <- filter(allowed_words, str_detect(allowed_words$word, not_the_letters[i], negate = TRUE))
+    
+  }
+
+  
+  return(allowed_words)
+  
+}
+
+answers_100322 <- spelling_bee_nic(spb_100322, spb_100322_centre)
+
+
+
+# Now produce hints, check for pangrams etc.
+
+pangrams <- str_detect(answers_100322$word, every(spb_letters))
+
+
+every(spb_letters, answers_100322$word)
+
 
