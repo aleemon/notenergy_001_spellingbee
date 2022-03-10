@@ -37,7 +37,8 @@ library(words)
 #library(combinat) # Not using this package
 library(gtools)
 library(stringi)
-
+#library(iterpc) # 'arrangements' is a more up-to-date package
+library(arrangements)
 
 
 ##-----  3. Define Permutation and Search Function  -----
@@ -217,6 +218,9 @@ system.time({
 
 
 
+## Package 'iterpc' might be able to help break the problem into chunks?
+
+
 ## Package 'ri' might be able to provide some assistance for breaking down the permutation problem?
 
 
@@ -259,8 +263,36 @@ system.time({
   # It's gonna struggle with permutations above 12 letter words
 
 
+## Compare the performance of 'permutations' to 'arrangements'
+
+# Should be much faster, as benchmarked here:
+  # https://randy3k.github.io/arrangements/articles/benchmark.html
+
+
+# https://cran.r-project.org/web/packages/arrangements/arrangements.pdf
+# https://stackoverflow.com/questions/69910536/why-does-gtoolscombinations-and-permutations-not-work-with-a-vector-containing
+
+# https://gist.github.com/randy3k/bd5730a6d70101c7471f4ae6f453862e
+
+
+perms <- gtools::permutations(
+  7, # 7 input letters
+  n, # Seeking words of length n
+  spb_letters, # Input of the Spelling Bee letters
+  set = FALSE, # Don't remove repeats from source vector, probably not needed
+  repeats.allowed = TRUE # Yes, definitely want repeats of letters
+) %>%
+  as.data.frame() %>% # Convert to data frame
+  unite(col = 'merged', sep = "") %>% # Concatenate the columns to form words
+  pull() # Convert to atomic vector
 
 
 
+# I do now understand how to use this package
+
+arrangs <- arrangements::permutations(
+  n = 7,
+  v = 
+)
 
 
