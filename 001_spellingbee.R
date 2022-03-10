@@ -41,13 +41,15 @@ library(stringi)
 library(arrangements)
 
 
+## Might need to look at alternative word databases
+
 ##-----  3. Define Permutation and Search Function  -----
 
 spelling_bee <- function(n, spb_letters, spb_centre) {
 
   system.time({  
   ## Get all permutations, with repeats for n letter words
-  perms <- permutations(
+  perms <- gtools::permutations(
     7, # 7 input letters
     n, # Seeking words of length n
     spb_letters, # Input of the Spelling Bee letters
@@ -147,7 +149,7 @@ data("words")
 
 
 ## Drop any words < 4 letters long
-words <- filter(words, word_length > 4)
+words <- filter(words, word_length >= 4)
 
 
 
@@ -163,20 +165,25 @@ spb_090322_centre <- 'm'
 
 ##-----  5. Find the Permutations  -----
 
-#~ Longest word in English is 45 letters long
+#~ Longest word in English is 45 letters long, and there's some 21 letter words
   #! Realistically, how many iterations should I bother running through, probably 12 or 14
 
+##---  9 March 2022
 
-answers <- map(c(4:12), function(n) {spelling_bee(n, spb_090322, spb_090322_centre)})
+answers_090322 <- map(c(4:7), function(n) {spelling_bee(n, spb_090322, spb_090322_centre)}) 
 
 ## Combine answers into a data frame
+#answers_df <- do.call(rbind, answers)
+answers_090322_vec <- unlist(answers)
 
 
+##---  10 March 2022
+
+answers_100322 <- map(c(4:7), function(n) {spelling_bee(n, spb_100322, spb_100322_centre)}) 
+answers_100322_vec <- unlist(answers_100322)
 
 
-
-
-
+##-----  6. Work to improve speed
 
 
 ## Ideas to speed up
@@ -288,11 +295,25 @@ perms <- gtools::permutations(
 
 
 
-# I do now understand how to use this package
+# I understand how to use this package, from SO explanation
+  # https://stackoverflow.com/questions/22569176/how-to-generate-permutations-or-combinations-of-object-in-r
 
+#~ This is waaaaay more efficient than the gtools::permutation() function
+  # Can handle up to n = 9
 arrangs <- arrangements::permutations(
-  n = 7,
-  v = 
-)
+  x = spb_100322,
+  k = 9,
+  replace = TRUE
+) %>%
+  as.data.frame() %>% # Convert to data frame
+  unite(col = 'merged', sep = "") %>% # Concatenate the columns to form words
+  pull() # Convert to atomic vector
+
+arrangs <- arrangs[str_detect(arrangs, spb_100322_centre)]
+arrangs <- arrangs[stri_detect_fixed(str_flatten(filter(words, word_length == 7)$word), arrangs)]
+
+## Now the subsetting/matching is the bottleneck - look to maybe chunk this approach?
+
+
 
 
