@@ -354,3 +354,4 @@ pangrams <- str_detect(answers_100322$word, every(spb_letters))
 every(spb_letters, answers_100322$word)
 
 
+
